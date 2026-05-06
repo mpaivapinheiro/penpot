@@ -3059,4 +3059,9 @@ is a number of cores)
 
 ## 1.0.0-alpha
 
+
+
+### :boom: Security
+
+- Fix SSRF in media URL import and restrict unauthenticated asset access to public buckets only.
 Initial release

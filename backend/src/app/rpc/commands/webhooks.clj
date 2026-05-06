@@ -51,11 +51,11 @@
   [cfg whook params]
   (when (not= (:uri whook) (:uri params))
     (let [response (ex/try!
-                    (http/req! cfg
-                               {:method :head
-                                :uri (str (:uri params))
-                                :timeout (ct/duration "3s")}
-                               {:sync? true}))]
+                    (http/req cfg
+                              {:method :head
+                               :uri (str (:uri params))
+                               :timeout (ct/duration "3s")}
+                              {:sync? true}))]
       (if (ex/exception? response)
         (if-let [hint (webhooks/interpret-exception response)]
           (ex/raise :type :validation

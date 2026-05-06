@@ -159,7 +159,7 @@
                    :method :post
                    :body body}]
           (try
-            (let [rsp (http/req! cfg req {:response-type :input-stream :sync? true})
+            (let [rsp (http/req cfg req {:response-type :input-stream :sync? true})
                   err (interpret-response rsp)]
               (report-delivery! whook req rsp err)
               (update-webhook! whook err))
