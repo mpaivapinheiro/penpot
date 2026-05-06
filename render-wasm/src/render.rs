@@ -21,7 +21,6 @@ use options::RenderOptions;
 pub use surfaces::{SurfaceId, Surfaces};
 
 use crate::error::{Error, Result};
-use crate::{get_gpu_state, performance};
 use crate::shapes::{
     all_with_ancestors, radius_to_sigma, Blur, BlurType, Corners, Fill, Shadow, Shape, SolidColor,
     Stroke, StrokeKind, TextContent, Type,
@@ -31,6 +30,7 @@ use crate::tiles::{self, PendingTiles, TileRect};
 use crate::uuid::Uuid;
 use crate::view::Viewbox;
 use crate::wapi;
+use crate::{get_gpu_state, performance};
 
 pub use fonts::*;
 pub use images::*;
@@ -782,8 +782,7 @@ impl RenderState {
     pub fn resize(&mut self, width: i32, height: i32) -> Result<()> {
         let dpr_width = (width as f32 * self.options.dpr()).floor() as i32;
         let dpr_height = (height as f32 * self.options.dpr()).floor() as i32;
-        self.surfaces
-            .resize(dpr_width, dpr_height)?;
+        self.surfaces.resize(dpr_width, dpr_height)?;
         self.viewbox.set_wh(width as f32, height as f32);
         self.tile_viewbox.update(self.viewbox, self.get_scale());
 
@@ -791,8 +790,7 @@ impl RenderState {
     }
 
     pub fn flush_and_submit(&mut self) {
-        self.surfaces
-            .flush_and_submit(SurfaceId::Target);
+        self.surfaces.flush_and_submit(SurfaceId::Target);
     }
 
     pub fn reset_canvas(&mut self) {
@@ -2179,8 +2177,7 @@ impl RenderState {
         // Clear export context so get_scale() returns to workspace zoom.
         self.export_context = None;
 
-        self.surfaces
-            .flush_and_submit(target_surface);
+        self.surfaces.flush_and_submit(target_surface);
 
         let image = self.surfaces.snapshot(target_surface);
         let data = image
@@ -3578,8 +3575,7 @@ impl RenderState {
     }
 
     pub fn remove_cached_tile(&mut self, tile: tiles::Tile) {
-        self.surfaces
-            .remove_cached_tile_surface(tile);
+        self.surfaces.remove_cached_tile_surface(tile);
     }
 
     /// Rebuild the tile index (shape→tile mapping) for all top-level shapes.
