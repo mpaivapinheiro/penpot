@@ -773,19 +773,44 @@
 
 (defn delete-team
   "Mark a team for deletion"
-  [{:keys [::db/conn] :as cfg} {:keys [profile-id team-id]}]
+  [{:keys [::db/conn] :as cfg} {:keys [profile-id team-id] :as params}]
 
   (let [team  (get-team conn :profile-id profile-id :team-id team-id)
+        team  (if (contains? cf/flags :nitrate)
+                (nitrate/add-org-info-to-team cfg team params)
+                team)
         perms (get team :permissions)]
-
-    (when-not (:is-owner perms)
-      (ex/raise :type :validation
-                :code :only-owner-can-delete-team))
 
     (when (:is-default team)
       (ex/raise :type :validation
                 :code :non-deletable-team
                 :hint "impossible to delete default team"))
+
+    ;; Check delete permissions based on organization settings
+    (when (and (:organization-id team) (contains? cf/flags :nitrate))
+      ;; Team is in an org with nitrate enabled - check org permissions
+      (let [org-perms (nitrate/call cfg :get-org-permissions
+                                    {:organization-id (:organization-id team)})]
+        (when (nil? org-perms)
+          (ex/raise :type :validation
+                    :code :not-allowed
+                    :hint "Unable to verify organization permissions"))
+
+        (let [delete-perm (:delete-teams org-perms)
+              is-owner? (:is-owner perms)
+              has-admin-role? (:is-admin perms)]
+          ;; Fail-closed logic: explicitly allow only if permitted
+          (when-not (or is-owner?  ; Owners always allowed
+                (and has-admin-role? (= delete-perm "ownersAndAdmins")))
+            (ex/raise :type :validation
+                      :code :not-allowed
+                      :hint "You are not allowed to delete teams in this organization")))))
+
+    ;; For non-org teams or when nitrate is disabled, only owners can delete
+    (when (not (:organization-id team))
+      (when-not (:is-owner perms)
+        (ex/raise :type :validation
+                  :code :only-owner-can-delete-team)))
 
     (let [delay (ldel/get-deletion-delay team)
           team  (db/update! conn :team
@@ -813,7 +838,7 @@
    ::sm/params schema:delete-team
    ::db/transaction true}
   [cfg {:keys [::rpc/profile-id id] :as params}]
-  (delete-team cfg {:team-id id :profile-id profile-id})
+  (delete-team cfg {:team-id id :profile-id profile-id ::rpc/profile-id profile-id})
   nil)
 
 ;; --- Mutation: Team Update Role
