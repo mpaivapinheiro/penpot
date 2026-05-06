@@ -12,7 +12,7 @@ use crate::wasm::text::{
     helpers as text_helpers, RawTextAlign, RawTextDecoration, RawTextDirection, RawTextTransform,
 };
 use crate::{get_render_state, mem};
-use crate::{with_state, with_state_mut, STATE};
+use crate::{with_state, with_state_mut};
 use skia_safe::Color;
 
 #[derive(PartialEq, ToJs)]
